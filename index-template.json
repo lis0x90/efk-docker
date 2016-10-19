@@ -1,0 +1,38 @@
+{
+  "microservice_template": {
+    "order": 0,
+    "template": "logstash-*",
+    "settings": {
+      "index.analysis.analyzer.analyzer_keyword.type": "custom",
+      "index.analysis.analyzer.analyzer_keyword.filter": "lowercase",
+      "index.analysis.analyzer.analyzer_keyword.tokenizer": "keyword"
+    },
+    "mappings": {
+      "fluentd": {
+        "properties": {
+          "request": {
+            "analyzer": "analyzer_keyword",
+            "type": "string"
+          },
+          "microservice": {
+            "analyzer": "analyzer_keyword",
+            "type": "string"
+          },
+          "namespace": {
+            "analyzer": "analyzer_keyword",
+            "type": "string"
+          },
+          "user": {
+            "analyzer": "analyzer_keyword",
+            "type": "string"
+          },
+          "tenant": {
+            "analyzer": "analyzer_keyword",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "aliases": {}
+  }
+}

@@ -1,30 +1,32 @@
 FROM centos:7
 
 ADD yum.repos.d /etc/yum.repos.d/
-ADD etc /etc/
-
-RUN yum install -y gcc
 RUN rpm --import https://packages.elastic.co/GPG-KEY-elasticsearch \
 	&& yum -y install epel-release \
-	&& rpm --import https://packages.treasuredata.com/GPG-KEY-td-agent \
-	&& yum -y install java-1.8.0-openjdk-headless elasticsearch td-agent wget supervisor \
+	&& yum -y install java-1.8.0-openjdk-headless elasticsearch \
+			wget supervisor gcc-c++ patch readline readline-devel \
+			zlib zlib-devel libyaml-devel libffi-devel openssl-devel \
+			make bzip2 autoconf automake libtool bison iconv-devel sqlite-devel which \
+	&& yum clean all \
 	&& cd /opt/ \
-	&& wget https://download.elastic.co/kibana/kibana/kibana-4.1.0-linux-x64.tar.gz \
-	&& tar xzvf kibana-4.1.0-linux-x64.tar.gz \
-	&& ln -s /opt/kibana-4.1.0-linux-x64 /opt/kibana4 \
-	&& rm -f kibana-4.1.0-linux-x64.tar.gz \
-	&& /opt/td-agent/embedded/bin/fluent-gem install fluent-plugin-elasticsearch \
-	&& /opt/td-agent/embedded/bin/fluent-gem install fluent-plugin-record-reformer \
-	&& /opt/td-agent/embedded/bin/fluent-gem install fluentd -v 0.14.1
+	&& wget https://download.elastic.co/kibana/kibana/kibana-4.6.1-linux-x86_64.tar.gz \
+	&& tar xzvf kibana-4.6.1-linux-x86_64.tar.gz \
+	&& ln -s /opt/kibana-4.6.1-linux-x86_64 /opt/kibana4 \
+	&& rm -f kibana-4.6.1-linux-x86_64.tar.gz
 
-COPY /etc/td-agent/out_elasticsearch.rb /opt/td-agent/embedded/lib/ruby/gems/2.1.0/gems/fluent-plugin-elasticsearch-1.5.0/lib/fluent/plugin/
-COPY /etc/td-agent/out_elasticsearch.rb /opt/td-agent/embedded/lib/ruby/gems/2.1.0/gems/fluentd-ui-0.4.2/app/models/fluentd/setting/
-COPY /etc/td-agent/fluent-plugin-elasticsearch.gemspec /opt/td-agent/embedded/lib/ruby/gems/2.1.0/gems/elasticsearch-2.0.0/
-COPY /etc/td-agent/fluent-plugin-elasticsearch.gemspec /opt/td-agent/embedded/lib/ruby/gems/2.1.0/gems/fluent-plugin-elasticsearch-1.5.0/
+RUN curl -sSL https://rvm.io/mpapis.asc | gpg --import - 
+RUN curl -L get.rvm.io | bash -s stable 
+RUN ["/bin/bash", "-c", "source /etc/profile.d/rvm.sh && \
+       rvm reload && \
+       rvm install 2.2.4 && \
+       rvm use 2.2.4 --default && \
+       /usr/local/rvm/rubies/ruby-2.2.4/bin/gem install fluentd -v 0.14.8 && \
+       /usr/local/rvm/gems/ruby-2.2.4/bin/fluent-gem install fluent-plugin-elasticsearch -v 1.7.0"]
+       
+RUN echo -e "#!/bin/bash\n. /etc/profile.d/rvm.sh && /usr/local/rvm/gems/ruby-2.2.4/bin/fluentd --log /var/log/fluentd.log" > /opt/fluentd.sh \
+	&& chmod +x /opt/fluentd.sh
 
-RUN rm -f /etc/td-agent/out_elasticsearch.rb \
-	&& rm -f /etc/td-agent/fluent-plugin-elasticsearch.gemspec \
-	&& yum clean all 
+ADD etc /etc/ 
 
 VOLUME ["/elasticsearch"]
 
